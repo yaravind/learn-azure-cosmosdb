@@ -8,17 +8,19 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Examples are inspired from https://docs.microsoft.com/en-us/azure/cosmos-db/sql-api-dotnet-samples
+ */
 public class MainApp {
     private static final Logger log = LoggerFactory.getLogger(MainApp.class);
-    private static String serviceEndpoint;
-    private static String masterKey;
+
     private static DocumentClient client;
     private static ConnectionPolicy conPolicy = ConnectionPolicy.GetDefault();
 
     public static void main(String[] args) {
         log.info("Program arguments: \n\t URI: {} \n\t Primary Key: {}", args[0], args[1]);
-        serviceEndpoint = args[0];
-        masterKey = args[1];
+        String serviceEndpoint = args[0];
+        String masterKey = args[1];
 
         client = new DocumentClient(serviceEndpoint, masterKey, conPolicy, ConsistencyLevel.Session);
 
@@ -42,13 +44,13 @@ public class MainApp {
         }
     }
 
+    /**
+     * The <code>readDatabases</code> method can be replaced by the following code
+     * <p>
+     * client.queryDatabases("SELECT * FROM root r", null);
+     */
     private static List<IdAndLink> getAllDatabases() {
         FeedResponse<Database> resp = client.readDatabases(null);
-        /**
-         * The above can be replaced by the following code
-         *
-         * client.queryDatabases("SELECT * FROM root r", null);
-         */
 
         List<IdAndLink> dbs = new ArrayList<>();
         for (Database db : resp.getQueryIterable()) {
