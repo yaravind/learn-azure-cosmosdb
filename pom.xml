@@ -27,7 +27,7 @@ This is both a Parent POM and Aggregate POM for all modules related to Cosmos DB
         <cassandra.driver.version>4.2.0</cassandra.driver.version>
         <mongo.driver.version>3.11.1</mongo.driver.version>
         <gremlin.driver.version>3.4.4</gremlin.driver.version>
-        <spark.version>2.3.0</spark.version>
+        <spark.version>2.3.3</spark.version>
         <slf4j-api.version>1.7.28</slf4j-api.version>
         <commons-lang3.version>3.5</commons-lang3.version>
 
