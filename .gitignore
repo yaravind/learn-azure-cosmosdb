@@ -46,6 +46,13 @@ buildNumber.properties
 !.vscode/launch.json
 !.vscode/extensions.json
 
+document-db-sql-api/.settings/*
+.settings/org.eclipse.core.resources.prefs
+.settings/org.eclipse.m2e.core.prefs
+.classpath
+.project
+settings.json
+
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
 .history
@@ -56,3 +63,4 @@ buildNumber.properties
 
 # Log file
 *.log
+
