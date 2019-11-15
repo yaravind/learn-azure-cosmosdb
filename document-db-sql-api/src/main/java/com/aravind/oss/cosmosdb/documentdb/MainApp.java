@@ -1,5 +1,6 @@
 package com.aravind.oss.cosmosdb.documentdb;
 
+import com.aravind.oss.cosmosdb.DocumentClientFactory;
 import com.aravind.oss.cosmosdb.Helpers;
 import com.aravind.oss.cosmosdb.IdAndLink;
 import com.aravind.oss.tvsshow.domain.*;
@@ -26,7 +27,6 @@ public class MainApp {
     public static final Scanner in = new Scanner(System.in);
 
     private static DocumentClient client;
-    private static ConnectionPolicy conPolicy = ConnectionPolicy.GetDefault();
 
     private static Gson gson = new Gson();
 
@@ -36,7 +36,7 @@ public class MainApp {
         String masterKey = args[1];
 
         try {
-            client = new DocumentClient(serviceEndpoint, masterKey, conPolicy, ConsistencyLevel.Session);
+            client = DocumentClientFactory.getDocumentClient(serviceEndpoint, masterKey);
 
             String command = "init";
             while (!command.equals("q")) {
