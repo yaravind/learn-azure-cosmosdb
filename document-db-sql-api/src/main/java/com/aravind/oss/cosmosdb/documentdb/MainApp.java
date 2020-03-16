@@ -4,6 +4,7 @@ import com.aravind.oss.cosmosdb.DocumentClientFactory;
 import com.aravind.oss.cosmosdb.Helpers;
 import com.aravind.oss.cosmosdb.IdAndLink;
 import com.aravind.oss.tvsshow.domain.*;
+import com.google.common.base.Stopwatch;
 import com.google.gson.Gson;
 import com.microsoft.azure.documentdb.*;
 import org.json.JSONObject;
@@ -18,6 +19,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Examples are inspired from https://docs.microsoft.com/en-us/azure/cosmos-db/sql-api-dotnet-samples
@@ -25,6 +27,7 @@ import java.util.*;
 public class MainApp {
     private static final Logger log = LoggerFactory.getLogger(MainApp.class);
     public static final Scanner in = new Scanner(System.in);
+    public static final String DATABASE_ID = "dbs/cos-bia-tccc-perf-01";
 
     private static DocumentClient client;
 
@@ -44,6 +47,8 @@ public class MainApp {
                 System.out.println("2 - Create and Populate TvShows collection.");
                 System.out.println("3 - Delete TvShows collection. ***Do this before you quit.***");
                 System.out.println("4 - Create JSON using Document API and log it to console.");
+                System.out.println("5 - Get partition key ranges for a given container and DB.");
+                System.out.println("6 - Read all documents of a given container and DB.");
                 System.out.println("q - Quit.");
                 System.out.println();
                 System.out.printf("Enter your choice and hit enter ...\n");
@@ -63,16 +68,33 @@ public class MainApp {
 
                     case "2":
                         log.info("Create and populate 'TvShows' collection");
-                        doTvShows("dbs/xIxnAA==/");
+                        doTvShows(DATABASE_ID);
                         break;
 
                     case "3":
                         log.info("Delete 'TvShows' collection");
-                        deleteTvShows("dbs/xIxnAA==/");
+                        deleteTvShows(DATABASE_ID);
                         break;
 
                     case "4":
                         createJson();
+                        break;
+
+                    case "5":
+                        Helpers.getPartitionKeyRanges(client, DATABASE_ID, "TvShows", "/name");
+                        break;
+
+                    case "6":
+                        Helpers.readEntireContainer(client, DATABASE_ID, "dbs/OnUVAA==/colls/OnUVAIMxkao=/", 10);
+//                        Helpers.readEntireContainer(client, DATABASE_ID, "dbs/OnUVAA==/colls/OnUVAIMxkao=/", 100);
+//                        Helpers.readEntireContainer(client, DATABASE_ID, "dbs/OnUVAA==/colls/OnUVAIMxkao=/", 200);
+//                        Helpers.readEntireContainer(client, DATABASE_ID, "dbs/OnUVAA==/colls/OnUVAIMxkao=/", 300);
+//                        Helpers.readEntireContainer(client, DATABASE_ID, "dbs/OnUVAA==/colls/OnUVAIMxkao=/", 400);
+//                        Helpers.readEntireContainer(client, DATABASE_ID, "dbs/OnUVAA==/colls/OnUVAIMxkao=/", 500);
+//                        Helpers.readEntireContainer(client, DATABASE_ID, "dbs/OnUVAA==/colls/OnUVAIMxkao=/", 600);
+//                        Helpers.readEntireContainer(client, DATABASE_ID, "dbs/OnUVAA==/colls/OnUVAIMxkao=/", 700);
+//                        Helpers.readEntireContainer(client, DATABASE_ID, "dbs/OnUVAA==/colls/OnUVAIMxkao=/", 800);
+//                        Helpers.readEntireContainer(client, DATABASE_ID, "dbs/OnUVAA==/colls/OnUVAIMxkao=/", 1000);
                 }
             }
         } catch (DocumentClientException e) {
@@ -119,25 +141,32 @@ public class MainApp {
         log.info(gson.toJson(shows.get(0)));
 
         try {
-            DocumentCollection collection = (DocumentCollection) Helpers.createContainerIfNotExists(client, dbLink, collectionId);
-
-            insertShows(collection, shows);
-
+            DocumentCollection collection = (DocumentCollection) Helpers.createContainerIfNotExists(client, dbLink, collectionId, "/name");
+            double totalRU = 0;
+            Stopwatch stopwatch = Stopwatch.createStarted();
+            for (int i = 0; i < 5000; i++) {
+                totalRU = insertShows(collection, shows);
+            }
+            long elapsed = stopwatch.elapsed(TimeUnit.MINUTES);
+            log.info("Took {} minutes and costed {} RU's", elapsed, totalRU);
         } catch (DocumentClientException e) {
             log.error("Couldn't create container: {} in database: {}", collectionId, dbLink, e);
         }
     }
 
-    private static void insertShows(DocumentCollection collection, List<Show> shows) throws DocumentClientException {
+    private static double insertShows(DocumentCollection collection, List<Show> shows) throws DocumentClientException {
+        double totalRU = 0.0;
         for (Show show : shows) {
-            client.createDocument(collection.getSelfLink(), new Document(gson.toJson(show)), null, false);
+            ResourceResponse<Document> doc = client.createDocument(collection.getSelfLink(), new Document(gson.toJson(show)), null, false);
+            totalRU += doc.getRequestCharge();
         }
+        return totalRU;
     }
 
     private static List<Show> createDomain() {
         Show show = new Show();
         show.setGenre(Genre.Comedy);
-        show.setName("Friends");
+        show.setName("X Factor");
 
         Network network = new Network();
         network.setName("NBC");
@@ -160,7 +189,7 @@ public class MainApp {
                 log.error("Can't parse airedDateRaw : {}", airedDatesRaw[i], e);
             }
             if (i <= 3) {
-                Path path = Paths.get("/Users/esharishik/Documents/Aravind/ws/learn-azure-cosmosdb/document-db-sql-api/src/main/resources/friends/" + "Season" + (i + 1) + ".txt");
+                Path path = Paths.get("/Users/o60774/Documents/WS/learn-azure-cosmosdb/document-db-sql-api/src/main/resources/friends/" + "Season" + (i + 1) + ".txt");
                 try {
                     List<String> lines = Files.readAllLines(path);
                     List<Episode> episodes = new ArrayList<>(lines.size());
